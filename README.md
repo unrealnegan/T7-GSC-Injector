@@ -5,7 +5,7 @@
 | **L1 + R3** | Load the selected menu |
 | **L1 + Right** | Select the next menu |
 | **L1 + Left** | Select the previous menu |
-| **L1 + OPTIONS** | Disable or enable inputs |
+| **L1 + Options** | Disable or enable inputs |
 | **L1 + Triangle** | Show credits |
 
 ## Installation
