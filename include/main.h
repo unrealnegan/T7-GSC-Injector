@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stddef.h>
+#include <stdint.h>
 #include <Patcher.h>
 
 #include "../include/plugin_common.h"
@@ -11,7 +13,6 @@
 #define VERSION "final"
 #define BUSY_INTERRUPT_S 1 // 1 second is ok, tested 500 it crashed the game every time
 
-char* g_notif_pfx = "⚡T7 GSC Injector";
 int g_errcode = 0;
 char g_notif_str[128] = {0};
 u8 g_busy = 0;

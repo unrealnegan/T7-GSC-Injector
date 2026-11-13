@@ -11,13 +11,21 @@ s32 scePadReadState_hook(s32 handle, OrbisPadData* pad_data)
 		g_busy = 1;
 		g_inputs = !g_inputs;
 		if (!g_inputs)
-			snprintf(g_notif_str, sizeof(g_notif_str), "%s\n\nInputs disabled", g_notif_pfx);
+			snprintf(g_notif_str, sizeof(g_notif_str), "Inputs disabled");
 		else
-			snprintf(g_notif_str, sizeof(g_notif_str), "%s\n\nInputs re-enabled", g_notif_pfx);
-		notif(TEX_ICON_SYSTEM, g_notif_str);
+			snprintf(g_notif_str, sizeof(g_notif_str), "Inputs enabled");
+		notif(TEX_ICON_CHAMPIONS_LEAGUE, g_notif_str);
 		sleep(BUSY_INTERRUPT_S);
 		g_busy = 0;
 	}	
+	if (pad_data->buttons == PAD_BUTTON_SHOW_MESSAGE && !g_busy && g_inputs)
+	{
+		g_busy = 1;
+		snprintf(g_notif_str, sizeof(g_notif_str), "Original by 0x1496FD0\nModified by unrealnegan");
+		notif(TEX_ICON_CHAMPIONS_LEAGUE, g_notif_str);
+		sleep(BUSY_INTERRUPT_S);
+		g_busy = 0;
+	}
 	if (!g_busy && g_inputs)
 	{
 		switch (pad_data->buttons)
@@ -41,7 +49,7 @@ s32 scePadReadState_hook(s32 handle, OrbisPadData* pad_data)
 
 s32 attr_public plugin_load(s32 argc, const char* argv[])
 {
-	snprintf(g_gsc_dir_str, sizeof(g_gsc_dir_str), "/data/T7 GSC Injector");
+	snprintf(g_gsc_dir_str, sizeof(g_gsc_dir_str), "/data/ModMenuInjector");
 	if (!dir_or_file_exist(g_gsc_dir_str, 0))
 		sceKernelMkdir(g_gsc_dir_str, 0777);
 
@@ -51,8 +59,8 @@ s32 attr_public plugin_load(s32 argc, const char* argv[])
     sys_dynlib_load_prx(module, &libScePad);
 	if (!libScePad)
 	{
-		snprintf(g_notif_str, sizeof(g_notif_str), "%s\n\nFailed, error code 0%d", g_notif_pfx, ++g_errcode);
-		notif(TEX_ICON_SYSTEM, g_notif_str);
+		snprintf(g_notif_str, sizeof(g_notif_str), "Failed, error code 0%d", ++g_errcode);
+		notif(TEX_ICON_CHAMPIONS_LEAGUE, g_notif_str);
 		return 0;
 	}
 
@@ -64,14 +72,14 @@ s32 attr_public plugin_load(s32 argc, const char* argv[])
 	
 	HOOK32(scePadReadState);
 
-	snprintf(g_notif_str, sizeof(g_notif_str),  "%s\n\nMade with ❤️ by 0xEB_0xFE\nv.%s", g_notif_pfx, VERSION);
-    notif(TEX_ICON_SYSTEM, g_notif_str);
+	snprintf(g_notif_str, sizeof(g_notif_str), "Mod Menu Loaded");
+	notif(TEX_ICON_CHAMPIONS_LEAGUE, g_notif_str);
 	sleep(1);
-	snprintf(g_notif_str, sizeof(g_notif_str),  "%s\n\nL1 + R3 to inject\n\nL1 + <-/-> to select a gsc", g_notif_pfx);
-    notif(TEX_ICON_SYSTEM, g_notif_str);
+	snprintf(g_notif_str, sizeof(g_notif_str), "Original by 0x1496FD0\nModified by unrealnegan");
+	notif(TEX_ICON_CHAMPIONS_LEAGUE, g_notif_str);
 	sleep(1);
-	snprintf(g_notif_str, sizeof(g_notif_str), "%s\n\nL1 + OPTIONS to toggle injection/gsc switch inputs listenning", g_notif_pfx);
-	notif(TEX_ICON_SYSTEM, g_notif_str);
+	snprintf(g_notif_str, sizeof(g_notif_str), "L1 + R3: Load menu\nL1 + Left/Right: Select menu\nL1 + Options: Toggle inputs\nL1 + Triangle: Show Credits");
+	notif(TEX_ICON_CHAMPIONS_LEAGUE, g_notif_str);
 
 	return 0;
 }
@@ -97,6 +105,18 @@ s32 attr_module_hidden module_stop(s64 argc, const void *args)
     return 0;
 }
 
+static void get_gsc_display_name(const char* path, char* display_name, size_t display_name_size)
+{
+	const char* filename = strrchr(path, '/');
+	size_t filename_length;
+
+	filename = filename ? filename + 1 : path;
+	snprintf(display_name, display_name_size, "%s", filename);
+	filename_length = strlen(display_name);
+	if (filename_length >= 5 && strcmp(display_name + filename_length - 5, ".gscc") == 0)
+		display_name[filename_length - 5] = '\0';
+}
+
 v query_files(const char* dir_path)
 {
 	if (g_files_count)
@@ -118,8 +138,8 @@ v inject()
 	query_files(g_gsc_dir_str);
 	if (!g_files_count)
 	{
-		snprintf(g_notif_str, sizeof(g_notif_str),  "%s\n\nNo file detected ?", g_notif_pfx);
-		notif(TEX_ICON_SYSTEM, g_notif_str);
+		snprintf(g_notif_str, sizeof(g_notif_str), "No file detected ?");
+		notif(TEX_ICON_CHAMPIONS_LEAGUE, g_notif_str);
 		return;
 	}
 
@@ -129,16 +149,16 @@ v inject()
 	s32 file_size = get_file_size(g_current_gsc_str);
 	if (file_size == -1)
 	{
-		snprintf(g_notif_str, sizeof(g_notif_str),  "%s\n\nInjection failed, error code 0%d", g_notif_pfx, ++g_errcode);
-		notif(TEX_ICON_SYSTEM, g_notif_str);
+		snprintf(g_notif_str, sizeof(g_notif_str), "Loading failed, error code 0%d", ++g_errcode);
+		notif(TEX_ICON_CHAMPIONS_LEAGUE, g_notif_str);
 		return;
 	}
 
 	FILE* file = fopen(g_current_gsc_str, "r");
 	if (file == NULL)
 	{
-		snprintf(g_notif_str, sizeof(g_notif_str),  "%s\n\nInjection failed, error code 0%d", g_notif_pfx, ++g_errcode);
-		notif(TEX_ICON_SYSTEM, g_notif_str);
+		snprintf(g_notif_str, sizeof(g_notif_str), "Loading failed, error code 0%d", ++g_errcode);
+		notif(TEX_ICON_CHAMPIONS_LEAGUE, g_notif_str);
 		return;
 	}
 
@@ -150,8 +170,8 @@ v inject()
 	if (!g_script_parse_tree.buffer)
 	{
 		fclose(file);
-		snprintf(g_notif_str, sizeof(g_notif_str),  "%s\n\nInjection failed, error code 0%d", g_notif_pfx, ++g_errcode);
-		notif(TEX_ICON_SYSTEM, g_notif_str);
+		snprintf(g_notif_str, sizeof(g_notif_str), "Loading failed, error code 0%d", ++g_errcode);
+		notif(TEX_ICON_CHAMPIONS_LEAGUE, g_notif_str);
 		return;
 	}
 
@@ -160,8 +180,8 @@ v inject()
 	{
     	free((p)g_script_parse_tree.buffer);
     	fclose(file);
-    	snprintf(g_notif_str, sizeof(g_notif_str), "%s\n\nInjection failed, error code 0%d", g_notif_pfx, ++g_errcode);
-    	notif(TEX_ICON_SYSTEM, g_notif_str);
+    	snprintf(g_notif_str, sizeof(g_notif_str), "Loading failed, error code 0%d", ++g_errcode);
+    	notif(TEX_ICON_CHAMPIONS_LEAGUE, g_notif_str);
     	return;
 	}
 
@@ -170,8 +190,10 @@ v inject()
 	mem_write(&crc32, (u64)g_script_parse_tree.buffer + g_offsets.script_parse_tree_buffer_crc32, sizeof(crc32));
 	mem_write(&g_script_parse_tree, g_offsets.script_parse_tree, sizeof(struct ScriptParseTree));
 
-	snprintf(g_notif_str, sizeof(g_notif_str), "%s\n\nSuccessfully injected\n%s", g_notif_pfx, g_current_gsc_str);
-    notif(TEX_ICON_SYSTEM, g_notif_str);
+	char display_name[256];
+	get_gsc_display_name(g_current_gsc_str, display_name, sizeof(display_name));
+	snprintf(g_notif_str, sizeof(g_notif_str), "%s Loaded", display_name);
+    notif(TEX_ICON_CHAMPIONS_LEAGUE, g_notif_str);
 
 	sleep(BUSY_INTERRUPT_S);
 	g_busy = 0;
@@ -179,11 +201,13 @@ v inject()
 
 v switch_gsc(u8 next_or_prev)
 {
+	char display_name[256];
+
 	query_files(g_gsc_dir_str);
 	if (!g_files_count)
 	{
-		snprintf(g_notif_str, sizeof(g_notif_str),  "%s\n\nNo file detected ?", g_notif_pfx);
-		notif(TEX_ICON_SYSTEM, g_notif_str);
+		snprintf(g_notif_str, sizeof(g_notif_str), "No file detected ?");
+		notif(TEX_ICON_CHAMPIONS_LEAGUE, g_notif_str);
 		return;
 	}
 	switch (next_or_prev)
@@ -194,7 +218,6 @@ v switch_gsc(u8 next_or_prev)
 			else
 				g_current_gsc_index = 0;
         	strcpy(g_current_gsc_str, g_files_strarr[g_current_gsc_index]);
-			snprintf(g_notif_str, sizeof(g_notif_str), "%s\n\n->\n%s", g_notif_pfx, g_current_gsc_str);
 			break;
         default:
             if (g_current_gsc_index > 0 && g_current_gsc_index < g_files_count)
@@ -202,11 +225,13 @@ v switch_gsc(u8 next_or_prev)
             else
                 g_current_gsc_index = g_files_count - 1;
 			strcpy(g_current_gsc_str, g_files_strarr[g_current_gsc_index]);
-            snprintf(g_notif_str, sizeof(g_notif_str), "%s\n\n<-\n%s", g_notif_pfx, g_current_gsc_str);
 			break;
     }
 
-	notif(TEX_ICON_SYSTEM, g_notif_str);
+	get_gsc_display_name(g_current_gsc_str, display_name, sizeof(display_name));
+	snprintf(g_notif_str, sizeof(g_notif_str), "%s", display_name);
+
+	notif(TEX_ICON_CHAMPIONS_LEAGUE, g_notif_str);
 
 	sleep(BUSY_INTERRUPT_S);
 	g_busy = 0;
